@@ -3,7 +3,7 @@ name: Nightly
 on:
   workflow_dispatch:
   schedule:
-    - cron:  '0 0 * * 1-5'
+    - cron:  "0 0 * * 1-5"
 
 jobs:
   fedora:
@@ -19,14 +19,14 @@ jobs:
     env:
       DYNAWO_INSTALL_OPENMODELICA: /opt/OpenModelica/Install
       DYNAWO_SRC_OPENMODELICA: /opt/OpenModelica/Source
-      DYNAWO_RESULTS_SHOW: 'false'
+      DYNAWO_RESULTS_SHOW: "false"
       DYNAWO_BUILD_TYPE: ${{ matrix.build-type }}
       DYNAWO_CXX11_ENABLED: ${{ matrix.cxx11-standard }}
       DYNAWO_COMPILER: ${{ matrix.compiler }}
       DYNAWO_NB_PROCESSORS_USED: 2
-      COMPILER_FOLDER: '${{ matrix.compiler == "GCC" && "gcc8" || "clang4.2.1" }}'
-      ZIP_NAME: 'dynawo-algorithms-fedora-${{ matrix.compiler }}-${{ matrix.build-type }}-${{ (matrix.cxx11-standard) == "YES" && "cxx11" || "cxx99" }}.zip'
-      ZIP_DYNAWO: 'dynawo-fedora-${{ matrix.compiler }}-${{ matrix.build-type }}-${{ (matrix.cxx11-standard) == "YES" && "cxx11" || "cxx99" }}.zip'
+      COMPILER_FOLDER: "${{ matrix.compiler == 'GCC' && 'gcc8' || 'clang4.2.1' }}"
+      ZIP_NAME: "dynawo-algorithms-fedora-${{ matrix.compiler }}-${{ matrix.build-type }}-${{ (matrix.cxx11-standard) == 'YES' && 'cxx11' || 'cxx99' }}.zip"
+      ZIP_DYNAWO: "dynawo-fedora-${{ matrix.compiler }}-${{ matrix.build-type }}-${{ (matrix.cxx11-standard) == 'YES' && 'cxx11' || 'cxx99' }}.zip"
 
     steps:
       - name: 🗞️ Checkout
@@ -35,11 +35,11 @@ jobs:
       - name: 🚚️ Fetch Dynawo
         uses: dsaltares/fetch-gh-release-asset@master
         with:
-          repo: 'sheosi/dynawo'
-          version: 'tags/nightly'
-          file: '${{ env.ZIP_DYNAWO }}'
-          target: 'dynawo'
-          token: '${{ secrets.GITHUB_TOKEN }}'
+          repo: "sheosi/dynawo"
+          version: "tags/nightly"
+          file: "${{ env.ZIP_DYNAWO }}"
+          target: "dynawo"
+          token: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: 🤔 Load persistent build files
         uses: actions/cache@v2
@@ -49,7 +49,7 @@ jobs:
             build
             install
           # An explicit key for restoring and saving the cache
-          key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeCache.lock') }}
+          key: ${{ runner.os }}-cmake-${{ hashFiles("**/CMakeCache.lock") }}
 
       - name: 🔨 Build
         run: |
@@ -57,7 +57,7 @@ jobs:
           util/envDynawoAlgorithms.sh build-user
 
       - name: 🧐️ Tests
-        if: ${{ matrix.build-type == 'Debug' }}
+        if: ${{ matrix.build-type == "Debug" }}
         run: |
           export DYNAWO_HOME=$(pwd)
           util/envDynawoAlgorithms.sh build-tests
@@ -72,16 +72,16 @@ jobs:
       - name: 📦 Archive Release
         uses: thedoctor0/zip-release@master
         with:
-          filename: '${{ env.ZIP_NAME }}'
-          directory: 'deploy/${{ env.COMPILER_FOLDER }}/'
+          filename: "${{ env.ZIP_NAME }}"
+          directory: "deploy/${{ env.COMPILER_FOLDER }}/"
 
       - name: 🎉 Release
         uses: ncipollo/release-action@v1
         with:
-          name: '🌑️ Nightly'
-          body: "Dynawo's 🌑️ nightly release. Compiled on *release* settings.\n\n **Don't use it for production**"
-          tag: 'nightly'
-          artifacts: 'deploy/${{ env.COMPILER_FOLDER }}/${{ env.ZIP_NAME }}'
+          name: "🌑️ Nightly"
+          body: "Dynawo's 🌑️ nightly release. Compiled on *release* settings.\n\n **Don"t use it for production**"
+          tag: "nightly"
+          artifacts: "deploy/${{ env.COMPILER_FOLDER }}/${{ env.ZIP_NAME }}"
           allowUpdates: true
           artifactErrorsFailBuild: true
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -91,15 +91,15 @@ jobs:
     runs-on: ubuntu-latest
     container: dynawo/dynawo-ci-nightly-bionic:latest
     env:
-      DYNAWO_RESULTS_SHOW: 'false'
+      DYNAWO_RESULTS_SHOW: "false"
       DYNAWO_BUILD_TYPE: Release
       DYNAWO_CXX11_ENABLED: YES
       DYNAWO_COMPILER: GCC
       DYNAWO_PYTHON_COMMAND: python3
       DYNAWO_NB_PROCESSORS_USED: 2
       COMPILER_FOLDER: gcc7
-      ZIP_NAME: 'dynawo-algorithms-ubuntu-GCC-Release-cxx11.zip'
-      ZIP_DYNAWO: 'dynawo-ubuntu-GCC-Release-cxx11.zip'
+      ZIP_NAME: "dynawo-algorithms-ubuntu-GCC-Release-cxx11.zip"
+      ZIP_DYNAWO: "dynawo-ubuntu-GCC-Release-cxx11.zip"
       
 
     steps:
@@ -109,11 +109,11 @@ jobs:
       - name: 🚚️ Fetch Dynawo
         uses: dsaltares/fetch-gh-release-asset@master
         with:
-          repo: 'sheosi/dynawo'
-          version: 'tags/nightly'
-          file: '${{ env.ZIP_DYNAWO }}'
-          target: 'dynawo'
-          token: '${{ secrets.GITHUB_TOKEN }}'
+          repo: "sheosi/dynawo"
+          version: "tags/nightly"
+          file: "${{ env.ZIP_DYNAWO }}"
+          target: "dynawo"
+          token: "${{ secrets.GITHUB_TOKEN }}"
       
       - name: 🤔 Load persistent build files
         uses: actions/cache@v2
@@ -123,7 +123,7 @@ jobs:
             build
             install
           # An explicit key for restoring and saving the cache
-          key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeCache.lock') }}
+          key: ${{ runner.os }}-cmake-${{ hashFiles("**/CMakeCache.lock") }}
 
       - name: 🔨 Build
         env:
@@ -152,16 +152,16 @@ jobs:
       - name: 📦 Archive Release
         uses: thedoctor0/zip-release@master
         with:
-            filename: '${{ env.ZIP_NAME }}'
-            directory: 'deploy/${{ env.COMPILER_FOLDER }}/'
+            filename: "${{ env.ZIP_NAME }}"
+            directory: "deploy/${{ env.COMPILER_FOLDER }}/"
       
       - name: 🎉 Release
         uses: ncipollo/release-action@v1
         with:
-            name: '🌑️ Nightly'
-            body: "Dynawo's 🌑️ nightly release. Compiled on *release* settings.\n\n **Don't use it for production**"
-            tag: 'nightly'
-            artifacts: 'deploy/${{ env.COMPILER_FOLDER }}/${{ env.ZIP_NAME }}'
+            name: "🌑️ Nightly"
+            body: "Dynawo's 🌑️ nightly release. Compiled on *release* settings.\n\n **Don"t use it for production**"
+            tag: "nightly"
+            artifacts: "deploy/${{ env.COMPILER_FOLDER }}/${{ env.ZIP_NAME }}"
             allowUpdates: true
             artifactErrorsFailBuild: true
             token: ${{ secrets.GITHUB_TOKEN }}
@@ -177,9 +177,9 @@ jobs:
       DYNAWO_BUILD_TYPE: Release
       DYNAWO_CXX11_ENABLED: YES
       DYNAWO_COMPILER: ${{ matrix.compiler }}
-      COMPILER_FOLDER: '${{ matrix.compiler == "GCC" && "gcc8" || "clang4.2.1" }}'
-      ZIP_NAME: 'dynawo-algorithms-omc-${{ matrix.compiler }}-Release-cxx11.zip'
-      ZIP_DYNAWo: 'dynawo-omc-${{ matrix.compiler }}-Release-cxx11.zip'
+      COMPILER_FOLDER: "${{ matrix.compiler == 'GCC' && 'gcc8' || 'clang4.2.1' }}"
+      ZIP_NAME: "dynawo-algorithms-omc-${{ matrix.compiler }}-Release-cxx11.zip"
+      ZIP_DYNAWo: "dynawo-omc-${{ matrix.compiler }}-Release-cxx11.zip"
 
     steps:
       - name: 🗞️ Checkout
@@ -188,11 +188,11 @@ jobs:
       - name: 🚚️ Fetch Dynawo
         uses: dsaltares/fetch-gh-release-asset@master
         with:
-          repo: 'sheosi/dynawo'
-          version: 'tags/nightly'
-          file: '${{ env.ZIP_DYNAWO }}'
-          target: 'dynawo'
-          token: '${{ secrets.GITHUB_TOKEN }}'
+          repo: "sheosi/dynawo"
+          version: "tags/nightly"
+          file: "${{ env.ZIP_DYNAWO }}"
+          target: "dynawo"
+          token: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: 🤔 Load persistent build files
         uses: actions/cache@v2
@@ -202,7 +202,7 @@ jobs:
             build
             install
           # An explicit key for restoring and saving the cache
-          key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeCache.lock') }}
+          key: ${{ runner.os }}-cmake-${{ hashFiles("**/CMakeCache.lock") }}
 
       - name: 🔨 Build
         env:
@@ -226,16 +226,16 @@ jobs:
       - name: 📦 Archive Release
         uses: thedoctor0/zip-release@master
         with:
-            filename: '${{ env.ZIP_NAME }}'
-            directory: 'deploy/${{ env.COMPILER_FOLDER }}/'
+            filename: "${{ env.ZIP_NAME }}"
+            directory: "deploy/${{ env.COMPILER_FOLDER }}/"
       
       - name: 🎉 Release
         uses: ncipollo/release-action@v1
         with:
-            name: '🌑️ Nightly'
-            body: "Dynawo's 🌑️ nightly release. Compiled on *release* settings.\n\n **Don't use it for production**"
-            tag: 'nightly'
-            artifacts: 'deploy/${{ env.COMPILER_FOLDER }}/${{ env.ZIP_NAME }}'
+            name: "🌑️ Nightly"
+            body: "Dynawo's 🌑️ nightly release. Compiled on *release* settings.\n\n **Don"t use it for production**"
+            tag: "nightly"
+            artifacts: "deploy/${{ env.COMPILER_FOLDER }}/${{ env.ZIP_NAME }}"
             allowUpdates: true
             artifactErrorsFailBuild: true
             token: ${{ secrets.GITHUB_TOKEN }}
