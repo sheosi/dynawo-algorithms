@@ -57,7 +57,7 @@ jobs:
           util/envDynawoAlgorithms.sh build-user
 
       - name: 🧐️ Tests
-        if: ${{ matrix.build-type == "Debug" }}
+        if: ${{ matrix.build-type == 'Debug' }}
         run: |
           export DYNAWO_HOME=$(pwd)
           util/envDynawoAlgorithms.sh build-tests
