@@ -1,0 +1,80 @@
+name: CI Release
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron:  "0 0 * * 1-5"
+
+jobs:
+  fedora:
+    name: Linux Fedora (${{ matrix.build-type }}, ${{ matrix.compiler }}, ${{ matrix.cxx11-standard }})
+    runs-on: ubuntu-latest
+    container: dynawo/dynawo-distribution-cxx11:latest
+    strategy:
+      matrix:
+        build-type: [Release]
+        cxx11-standard: [YES]
+        compiler: [GCC]
+      fail-fast: false
+    env:
+      DYNAWO_INSTALL_OPENMODELICA: /opt/OpenModelica/Install
+      DYNAWO_SRC_OPENMODELICA: /opt/OpenModelica/Source
+      DYNAWO_RESULTS_SHOW: "false"
+      DYNAWO_BUILD_TYPE: ${{ matrix.build-type }}
+      DYNAWO_CXX11_ENABLED: ${{ matrix.cxx11-standard }}
+      DYNAWO_COMPILER: ${{ matrix.compiler }}
+      DYNAWO_NB_PROCESSORS_USED: 2
+      COMPILER_FOLDER: "${{ matrix.compiler == 'GCC' && 'gcc8' || 'clang4.2.1' }}"
+      ZIP_NAME: "dynawo-algorithms-fedora-${{ matrix.compiler }}-${{ matrix.build-type }}-${{ (matrix.cxx11-standard) == 'YES' && 'cxx11' || 'cxx99' }}.zip"
+      ZIP_DYNAWO: "dynawo-fedora-${{ matrix.compiler }}-${{ matrix.build-type }}-${{ (matrix.cxx11-standard) == 'YES' && 'cxx11' || 'cxx99' }}.zip"
+
+    steps:
+      - name: 🗞️ Checkout
+        uses: actions/checkout@v2
+
+      - name: 🚚️ Fetch Dynawo
+        uses: dsaltares/fetch-gh-release-asset@master
+        with:
+          repo: "sheosi/dynawo"
+          version: "tags/nightly"
+          file: "${{ env.ZIP_DYNAWO }}"
+          target: "dynawo"
+          token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: 🤔 Load persistent build files
+        uses: actions/cache@v2
+        with:
+          # A list of files, directories, and wildcard patterns to cache and restore
+          path: |
+            build
+            install
+          # An explicit key for restoring and saving the cache
+          key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeCache.lock') }}
+
+      - name: 🔨 Build
+        run: |
+          export DYNAWO_HOME=$(pwd)
+          util/envDynawoAlgorithms.sh build-user
+      
+      - name: 📋 Prepare files
+        run: |
+          export DYNAWO_HOME=$(pwd)
+          util/envDynawoAlgorithms.sh deploy
+      
+      - name: 📦 Archive Release
+        uses: thedoctor0/zip-release@master
+        with:
+          filename: "${{ env.ZIP_NAME }}"
+          directory: "deploy/${{ env.COMPILER_FOLDER }}/"
+
+      - name: 🎉 Release
+        uses: ncipollo/release-action@v1
+        with:
+          name: "🌑️ Nightly"
+          body: "Dynawo's 🌑️ nightly release. Compiled on *release* settings.\n\n **Don't use it for production**"
+          commit: "master"
+          tag: "nightly"
+          artifacts: "deploy/${{ env.COMPILER_FOLDER }}/${{ env.ZIP_NAME }}"
+          allowUpdates: true
+          artifactErrorsFailBuild: true
+          token: ${{ secrets.GITHUB_TOKEN }}
