@@ -24,6 +24,7 @@ jobs:
       DYNAWO_CXX11_ENABLED: ${{ matrix.cxx11-standard }}
       DYNAWO_COMPILER: ${{ matrix.compiler }}
       DYNAWO_NB_PROCESSORS_USED: 2
+      DYNAWO_FORCE_CXX11_ABI: "true"
       COMPILER_FOLDER: "${{ matrix.compiler == 'GCC' && 'gcc8' || 'clang4.2.1' }}"
       ZIP_NAME: "dynawo-algorithms-fedora-${{ matrix.compiler }}-${{ matrix.build-type }}-${{ (matrix.cxx11-standard) == 'YES' && 'cxx11' || 'cxx99' }}.zip"
       ZIP_DYNAWO: "dynawo-fedora-${{ matrix.compiler }}-${{ matrix.build-type }}-${{ (matrix.cxx11-standard) == 'YES' && 'cxx11' || 'cxx99' }}.zip"
