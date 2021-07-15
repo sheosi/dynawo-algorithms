@@ -39,8 +39,14 @@ jobs:
           repo: "sheosi/dynawo"
           version: "tags/nightly"
           file: "${{ env.ZIP_DYNAWO }}"
-          target: "dynawo"
+          target: "dynawo/dynawo.zip"
           token: "${{ secrets.GITHUB_TOKEN }}"
+          
+      - name: 🎊️ Extract Dynawo
+        run: |
+          cd dynawo
+          unzip -qq "dynawo.zip"
+          cd ..
 
       - name: 🤔 Load persistent build files
         uses: actions/cache@v2
@@ -54,12 +60,12 @@ jobs:
 
       - name: 🔨 Build
         run: |
-          export DYNAWO_HOME=$(pwd)
+          export DYNAWO_HOME=$(pwd)/dynawo
           util/envDynawoAlgorithms.sh build-user
       
       - name: 📋 Prepare files
         run: |
-          export DYNAWO_HOME=$(pwd)
+          export DYNAWO_HOME=$(pwd)/dynawo
           util/envDynawoAlgorithms.sh deploy
       
       - name: 📦 Archive Release
@@ -72,7 +78,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           name: "🌑️ Nightly"
-          body: "Dynawo's 🌑️ nightly release. Compiled on *release* settings.\n\n **Don't use it for production**"
+          body: "Dynaflow laucnher's 🌑️ nightly release. Compiled on *release* settings.\n\n **Don't use it for production**"
           commit: "master"
           tag: "nightly"
           artifacts: "deploy/${{ env.COMPILER_FOLDER }}/${{ env.ZIP_NAME }}"
