@@ -61,11 +61,13 @@ jobs:
       - name: 🔨 Build
         run: |
           export DYNAWO_HOME=$(pwd)/dynawo
+          export DYNAWO_ALGORITHMS_HOME=$(pwd)
           util/envDynawoAlgorithms.sh build-user
       
       - name: 📋 Prepare files
         run: |
           export DYNAWO_HOME=$(pwd)/dynawo
+          export DYNAWO_ALGORITHMS_HOME=$(pwd)
           util/envDynawoAlgorithms.sh deploy
       
       - name: 📦 Archive Release
