@@ -62,7 +62,7 @@ jobs:
         run: |
           export DYNAWO_HOME=$(pwd)/dynawo
           export DYNAWO_ALGORITHMS_HOME=$(pwd)
-          util/envDynawoAlgorithms.sh build-user
+          util/envDynawoAlgorithms.sh build
       
       - name: 📋 Prepare files
         run: |
