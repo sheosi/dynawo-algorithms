@@ -81,7 +81,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           name: "🌑️ Nightly"
-          body: "Dynaflow laucnher's 🌑️ nightly release. Compiled on *release* settings.\n\n **Don't use it for production**"
+          body: "Dynaflow algorithms's 🌑️ nightly release. Compiled on *release* settings.\n\n **Don't use it for production**"
           commit: "master"
           tag: "nightly"
           artifacts: "deploy/${{ env.COMPILER_FOLDER }}/${{ env.ZIP_NAME }}"
