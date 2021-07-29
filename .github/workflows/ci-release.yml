@@ -71,10 +71,9 @@ jobs:
           util/envDynawoAlgorithms.sh deploy
       
       - name: 📦 Archive Release
-        uses: thedoctor0/zip-release@master
-        with:
-          filename: "${{ env.ZIP_NAME }}"
-          directory: "deploy/${{ env.COMPILER_FOLDER }}/"
+        run: |
+          cd "deploy/${{ env.COMPILER_FOLDER }}/"
+          zip -r "${{ env.ZIP_NAME }}" ./*
 
       - name: 🎉 Release
         uses: ncipollo/release-action@v1
