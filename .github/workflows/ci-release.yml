@@ -7,27 +7,22 @@ on:
 
 jobs:
   fedora:
-    name: Linux Fedora (${{ matrix.build-type }}, ${{ matrix.compiler }}, ${{ matrix.cxx11-standard }})
+    name: Linux Fedora (Release, GCC, cxx11)
     runs-on: ubuntu-latest
     container: dynawo/dynawo-distribution-cxx11:latest
     strategy:
-      matrix:
-        build-type: [Release]
-        cxx11-standard: [YES]
-        compiler: [GCC]
       fail-fast: false
     env:
       DYNAWO_INSTALL_OPENMODELICA: /opt/OpenModelica/Install
       DYNAWO_SRC_OPENMODELICA: /opt/OpenModelica/Source
       DYNAWO_RESULTS_SHOW: "false"
-      DYNAWO_BUILD_TYPE: ${{ matrix.build-type }}
-      DYNAWO_CXX11_ENABLED: ${{ matrix.cxx11-standard }}
-      DYNAWO_COMPILER: ${{ matrix.compiler }}
+      DYNAWO_BUILD_TYPE: Release
+      DYNAWO_CXX11_ENABLED: YES
       DYNAWO_NB_PROCESSORS_USED: 2
       DYNAWO_FORCE_CXX11_ABI: "true"
-      COMPILER_FOLDER: "${{ matrix.compiler == 'GCC' && 'gcc5.3.1' || 'clang4.2.1' }}"
-      ZIP_NAME: "dynawo-algorithms-fedora-${{ matrix.compiler }}-${{ matrix.build-type }}-${{ (matrix.cxx11-standard) == 'YES' && 'cxx11' || 'cxx99' }}.zip"
-      ZIP_DYNAWO: "dynawo-fedora-${{ matrix.compiler }}-${{ matrix.build-type }}-${{ (matrix.cxx11-standard) == 'YES' && 'cxx11' || 'cxx99' }}.zip"
+      COMPILER_FOLDER: 'gcc5.3.1'
+      ZIP_NAME: "dynawo-algorithms-fedora-Release-GCC-cxx11.zip"
+      ZIP_DYNAWO: "dynawo-fedora-Release-GCC-cxx11.zip"
 
     steps:
       - name: 🗞️ Checkout
