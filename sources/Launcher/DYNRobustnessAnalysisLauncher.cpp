@@ -43,7 +43,10 @@
 #include <JOBDynModelsEntry.h>
 #include <JOBDynModelsEntryFactory.h>
 #include <JOBModelerEntry.h>
+#include <JOBIterators.h>
+#include <JOBJobsCollection.h>
 #include <DYNMacrosMessage.h>
+#include <DYNDataInterfaceFactory.h>
 #include <DYNTrace.h>
 
 #include <config.h>
@@ -55,6 +58,7 @@
 #include "DYNMultipleJobs.h"
 #include "MacrosMessage.h"
 
+#include <boost/make_shared.hpp>
 using DYN::Trace;
 using multipleJobs::MultipleJobs;
 
@@ -266,15 +270,21 @@ RobustnessAnalysisLauncher::addDydFileToJob(boost::shared_ptr<job::JobEntry>& jo
     job->getModelerEntry()->addDynModelsEntry(dynModels);
   }
 }
+
 boost::shared_ptr<DYN::Simulation>
 RobustnessAnalysisLauncher::createAndInitSimulation(const std::string& workingDir,
-    boost::shared_ptr<job::JobEntry>& job, const SimulationParameters& params, SimulationResult& result) {
+    boost::shared_ptr<job::JobEntry>& job, const SimulationParameters& params, SimulationResult& result, const MultiVariantInputs& analysisContext) {
   boost::shared_ptr<DYN::SimulationContext> context = boost::shared_ptr<DYN::SimulationContext>(new DYN::SimulationContext());
   context->setResourcesDirectory(getMandatoryEnvVar("DYNAWO_RESOURCES_DIR"));
   context->setLocale(getMandatoryEnvVar("DYNAWO_ALGORITHMS_LOCALE"));
   context->setInputDirectory(workingDirectory_);
   context->setWorkingDirectory(workingDir);
-  boost::shared_ptr<DYN::Simulation> simulation = boost::shared_ptr<DYN::Simulation>(new DYN::Simulation(job, context));
+
+  boost::shared_ptr<DYN::DataInterface> dataInterface = analysisContext.dataInterfaceContainer()
+    ? analysisContext.dataInterfaceContainer()->getDataInterface()
+    : boost::shared_ptr<DYN::DataInterface>();
+  boost::shared_ptr<DYN::Simulation> simulation =
+    boost::shared_ptr<DYN::Simulation>(new DYN::Simulation(job, context, dataInterface));
 
   if (!params.InitialStateFile_.empty())
     simulation->setInitialStateFile(params.InitialStateFile_);
@@ -296,6 +306,8 @@ RobustnessAnalysisLauncher::createAndInitSimulation(const std::string& workingDi
   try {
     simulation->init();
   } catch (const DYN::Error& e) {
+    std::cerr << e.what() << std::endl;
+    Trace::error() << e.what() << Trace::endline;
     result.setSuccess(false);
     if (e.type() == DYN::Error::SOLVER_ALGO || e.type() == DYN::Error::SUNDIALS_ERROR) {
       result.setStatus(DIVERGENCE_STATUS);
@@ -303,7 +315,21 @@ RobustnessAnalysisLauncher::createAndInitSimulation(const std::string& workingDi
       result.setStatus(EXECUTION_PROBLEM_STATUS);
     }
     return boost::shared_ptr<DYN::Simulation>();
+  } catch (const DYN::MessageError& m) {
+    std::cerr << m.what() << std::endl;
+    Trace::error() << m.what() << Trace::endline;
+    result.setSuccess(false);
+    result.setStatus(EXECUTION_PROBLEM_STATUS);
+    return boost::shared_ptr<DYN::Simulation>();
+  } catch (const std::exception& e) {
+    std::cerr << e.what() << std::endl;
+    Trace::error() << e.what() << Trace::endline;
+    result.setSuccess(false);
+    result.setStatus(EXECUTION_PROBLEM_STATUS);
+    return boost::shared_ptr<DYN::Simulation>();
   } catch (...) {
+    std::cerr << "Init simulation unknown error" << std::endl;
+    Trace::error() << "Init simulation unknown error" << Trace::endline;
     result.setSuccess(false);
     result.setStatus(EXECUTION_PROBLEM_STATUS);
     return boost::shared_ptr<DYN::Simulation>();
@@ -320,6 +346,8 @@ RobustnessAnalysisLauncher::simulate(const boost::shared_ptr<DYN::Simulation>& s
       result.setSuccess(true);
       result.setStatus(CONVERGENCE_STATUS);
     } catch (const DYN::Error& e) {
+      std::cerr << e.what() << std::endl;
+      Trace::error() << e.what() << Trace::endline;
       // Needed as otherwise terminate might crash due to badly formed model
       simulation->activateExportIIDM(false);
       simulation->terminate();
@@ -334,7 +362,21 @@ RobustnessAnalysisLauncher::simulate(const boost::shared_ptr<DYN::Simulation>& s
       } else {
         result.setStatus(EXECUTION_PROBLEM_STATUS);
       }
+    } catch (const DYN::MessageError& m) {
+      std::cerr << m.what() << std::endl;
+      Trace::error() << m.what() << Trace::endline;
+      simulation->terminate();
+      result.setSuccess(false);
+      result.setStatus(EXECUTION_PROBLEM_STATUS);
+    } catch (const std::exception& e) {
+      std::cerr << e.what() << std::endl;
+      Trace::error() << e.what() << Trace::endline;
+      simulation->terminate();
+      result.setSuccess(false);
+      result.setStatus(EXECUTION_PROBLEM_STATUS);
     } catch (...) {
+      std::cerr << "Run simulation unknown error" << std::endl;
+      Trace::error() << "Run simulation unknown error" << Trace::endline;
       simulation->terminate();
       result.setSuccess(false);
       result.setStatus(EXECUTION_PROBLEM_STATUS);
@@ -410,4 +452,5 @@ RobustnessAnalysisLauncher::writeResults() const {
     zip::ZipOutputStream::write(outputFileFullPath_, archive);
   }
 }
+
 }  // namespace DYNAlgorithms

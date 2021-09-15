@@ -18,7 +18,12 @@
 #include <JOBJobEntry.h>
 #include <JOBModelerEntry.h>
 #include <JOBDynModelsEntry.h>
+
 #include <gtest_dynawo.h>
+#include <boost/make_shared.hpp>
+#include <libzip/ZipFile.h>
+#include <libzip/ZipFileFactory.h>
+#include <libzip/ZipOutputStream.h>
 
 #include "DYNRobustnessAnalysisLauncher.h"
 #include "DYNResultCommon.h"
@@ -38,20 +43,16 @@ class MyLauncher : public RobustnessAnalysisLauncher {
 
  public:
   void launch() {
-    job::XmlImporter importer;
-    // implicit rule : one job per file
-    boost::shared_ptr<job::JobsCollection> jobsCollection = importer.importFromFile("res/MyJobs.jobs");
-    if (jobsCollection->begin() == jobsCollection->end())
-      return;
-    job::job_iterator itJobEntry = jobsCollection->begin();
-    boost::shared_ptr<job::JobEntry>& job = *itJobEntry;
+    inputs_.readInputs(workingDirectory_, "MyJobs.jobs", 1);
+    boost::shared_ptr<job::JobEntry> job = inputs_.cloneJobEntry();
     addDydFileToJob(job, "MyDydFile.dyd");
     ASSERT_EQ(job->getModelerEntry()->getDynModelsEntries().size(), 2);
     ASSERT_EQ(job->getModelerEntry()->getDynModelsEntries()[1]->getDydFile(), "MyDydFile.dyd");
 
     SimulationParameters params;
     result_.setScenarioId("MyScenario");
-    boost::shared_ptr<DYN::Simulation> simu = createAndInitSimulation("res", job, params, result_);
+    boost::shared_ptr<DYN::Simulation> simu = createAndInitSimulation("res", job, params, result_, inputs_);
+    ASSERT_TRUE(simu);
     status_t status = simulate(simu, result_);
     ASSERT_EQ(status, CONVERGENCE_STATUS);
     ASSERT_EQ(result_.getStatus(), CONVERGENCE_STATUS);
@@ -160,6 +161,9 @@ TEST(TestLauncher, TestRobustnessAnalysisLauncher) {
   launcher.setInputFile("res/MyInputFile.txt");
   ASSERT_THROW_DYNAWO(launcher.init(), DYN::Error::GENERAL, DYNAlgorithms::KeyAlgorithmsError_t::InputFileFormatNotSupported);
 
+  boost::shared_ptr<zip::ZipFile> archive = zip::ZipFileFactory::newInstance();
+  archive->addEntry("res/fic_MULTIPLE.xml");
+  zip::ZipOutputStream::write("res/MyInputFile.zip", archive);
   launcher.setInputFile("MyInputFile.zip");
   launcher.setDirectory("res");
   launcher.setOutputFile("MyOutputFile.zip");

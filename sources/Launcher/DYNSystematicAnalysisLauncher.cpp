@@ -14,7 +14,7 @@
 /**
  * @file  SystematicAnalysis.cpp
  *
- * @brief Systematic Analysis : implementation of the algorithm and interaction with dynamo core
+ * @brief Systematic Analysis : implementation of the algorithm and interaction with dynawo core
  *
  */
 
@@ -30,6 +30,7 @@
 #include <fstream>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 
 #include <libzip/ZipFile.h>
 #include <libzip/ZipFileFactory.h>
@@ -60,6 +61,9 @@ SystematicAnalysisLauncher::~SystematicAnalysisLauncher() {
 void
 SystematicAnalysisLauncher::launch() {
   boost::shared_ptr<Scenarios> scenarios = multipleJobs_->getScenarios();
+  if (!scenarios) {
+    throw DYNAlgorithmsError(SystematicAnalysisTaskNotFound);
+  }
   const std::string& baseJobsFile = scenarios->getJobsFile();
   const std::vector<boost::shared_ptr<Scenario> >& events = scenarios->getScenarios();
 
@@ -76,33 +80,35 @@ SystematicAnalysisLauncher::launch() {
       throw DYNAlgorithmsError(DirectoryDoesNotExist, workingDir);
   }
 
+  inputs_.readInputs(workingDirectory_, baseJobsFile, events.size());
+
 #pragma omp parallel for schedule(dynamic, 1)
-  for (unsigned int i=0; i < events.size(); i++)
-    results_[i] = launchScenario(events[i], baseJobsFile);
+  for (unsigned int i=0; i < events.size(); i++) {
+    inputs_.setCurrentVariant(i);
+    results_[i] = launchScenario(events[i]);
+  }
 }
 
 SimulationResult
-SystematicAnalysisLauncher::launchScenario(const boost::shared_ptr<Scenario>& scenario, const std::string& baseJobsFile) {
+SystematicAnalysisLauncher::launchScenario(const boost::shared_ptr<Scenario>& scenario) {
   if (nbThreads_ == 1)
     std::cout << " Launch scenario :" << scenario->getId() << " dydFile =" << scenario->getDydFile() << std::endl;
 
   std::string workingDir  = createAbsolutePath(scenario->getId(), workingDirectory_);
-  job::XmlImporter importer;
-  boost::shared_ptr<job::JobsCollection> jobsCollection = importer.importFromFile(workingDirectory_ + "/" + baseJobsFile);
-  //  implicit : only one job per file
-  job::job_iterator itJobEntry = jobsCollection->begin();
-  boost::shared_ptr<job::JobEntry>& job = *itJobEntry;
+  boost::shared_ptr<job::JobEntry> job = inputs_.cloneJobEntry();
   addDydFileToJob(job, scenario->getDydFile());
   SimulationParameters params;
   SimulationResult result;
   result.setScenarioId(scenario->getId());
-  boost::shared_ptr<DYN::Simulation> simulation = createAndInitSimulation(workingDir, job, params, result);
+  boost::shared_ptr<DYN::Simulation> simulation = createAndInitSimulation(workingDir, job, params, result, inputs_);
 
   if (simulation) {
     simulate(simulation, result);
   }
+
   if (nbThreads_ == 1)
     std::cout << " scenario :" << scenario->getId() << " final status: " << getStatusAsString(result.getStatus()) << std::endl;
+
   return result;
 }
 

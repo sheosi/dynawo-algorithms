@@ -67,6 +67,7 @@ else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++98")
 endif()
 
+
 # Add specific options for compiler
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   # See all warnings in Debug mode
@@ -136,6 +137,8 @@ if(BOOST_ROOT_DEFAULT STREQUAL "true")
   set(Boost_NO_SYSTEM_PATHS FALSE)
 else()
   set(Boost_NO_SYSTEM_PATHS TRUE)
+  # Use Boost_NO_BOOST_CMAKE to ensure that find_package uses MODULE mode and takes Boost_NO_SYSTEM_PATHS into account, instead of CONFIG mode
+  set(Boost_NO_BOOST_CMAKE ON)
 endif()
 # Tell BOOST to disable auto linking
 add_definitions(-DBOOST_ALL_NO_LIB)
@@ -196,6 +199,7 @@ else()
 endif()
 
 if(NOT USE_LEGACY_IIDM)
+  add_definitions(-DUSE_POWSYBL)
   find_package(LibXml2 "2.9" REQUIRED)
   find_package(LibIIDM "1.4.0" REQUIRED)
 else()

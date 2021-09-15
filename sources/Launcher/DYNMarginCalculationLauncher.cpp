@@ -14,7 +14,7 @@
 /**
  * @file  MarginCalculationLauncher.cpp
  *
- * @brief Margin Calculation launcher: implementation of the algorithm and interaction with dynamo core
+ * @brief Margin Calculation launcher: implementation of the algorithm and interaction with dynawo core
  *
  */
 
@@ -100,6 +100,7 @@ MarginCalculationLauncher::launch() {
   size_t idx = results_.size() - 1;
   results_[idx].resize(events.size());
   results_[idx].setLoadLevel(100.);
+
   // step one : launch the loadIncrease and then all events with 100% of the load increase
   // if there is no crash => no need to go further
   // We start with 100% as it is the most common result of margin calculations on real large cases
@@ -348,8 +349,15 @@ void MarginCalculationLauncher::findOrLaunchScenarios(const std::string& baseJob
   const std::vector<size_t>& eventsId = task.ids_;
   double newVariation = round((task.minVariation_ + task.maxVariation_)/2);
   if (nbThreads_ == 1) {
-    for (unsigned int i=0; i < eventsId.size(); i++)
-      launchScenario(events[eventsId[i]], baseJobsFile, newVariation, result.getResult(eventsId[i]));
+    std::string iidmFile = generateIDMFileNameForVariation(newVariation);
+    if (inputsByIIDM_.count(iidmFile) == 0) {
+      // read inputs only if not already existing with enough variants defined
+      inputsByIIDM_[iidmFile].readInputs(workingDirectory_, baseJobsFile, eventsId.size(), iidmFile);
+    }
+    for (unsigned int i=0; i < eventsId.size(); i++) {
+      inputsByIIDM_.at(iidmFile).setCurrentVariant(i);
+      launchScenario(inputsByIIDM_[iidmFile], events[eventsId[i]], newVariation, result.getResult(eventsId[i]));
+    }
     return;
   }
   std::map<double, LoadIncreaseResult, dynawoDoubleLess>::iterator it = scenariosCache_.find(newVariation);
@@ -370,11 +378,22 @@ void MarginCalculationLauncher::findOrLaunchScenarios(const std::string& baseJob
     }
     createScenarioWorkingDir(events[eventIdx]->getId(), variation);
   }
+
+  for (std::vector<std::pair<size_t, double> >::const_iterator it = events2Run.begin(); it != events2Run.end(); ++it) {
+    double variation = it->second;
+    std::string iidmFile = generateIDMFileNameForVariation(variation);
+    if (inputsByIIDM_.count(iidmFile) == 0) {
+      inputsByIIDM_[iidmFile].readInputs(workingDirectory_, baseJobsFile, events.size(), iidmFile);
+    }
+  }
+
 #pragma omp parallel for schedule(dynamic, 1)
   for (unsigned int i=0; i < events2Run.size(); i++) {
     double variation = events2Run[i].second;
+    std::string iidmFile = generateIDMFileNameForVariation(variation);
     size_t eventIdx = events2Run[i].first;
-    launchScenario(events[eventIdx], baseJobsFile, variation, scenariosCache_[variation].getResult(eventIdx));
+    inputsByIIDM_.at(iidmFile).setCurrentVariant(eventIdx);
+    launchScenario(inputsByIIDM_.at(iidmFile), events[eventIdx], variation, scenariosCache_[variation].getResult(eventIdx));
   }
   assert(scenariosCache_.find(newVariation) != scenariosCache_.end());
   for (unsigned int i=0; i < eventsId.size(); i++)
@@ -403,20 +422,15 @@ MarginCalculationLauncher::prepareEvents2Run(const task_t& requestedTask,
 }
 
 void
-MarginCalculationLauncher::launchScenario(const boost::shared_ptr<Scenario>& scenario, const std::string& baseJobsFile,
+MarginCalculationLauncher::launchScenario(const MultiVariantInputs& inputs, const boost::shared_ptr<Scenario>& scenario,
     const double variation, SimulationResult& result) {
   if (nbThreads_ == 1)
     std::cout << " Launch task :" << scenario->getId() << " dydFile =" << scenario->getDydFile() << std::endl;
+
   std::stringstream subDir;
   subDir << "step-" << variation << "/" << scenario->getId();
   std::string workingDir = createAbsolutePath(subDir.str(), workingDirectory_);
-  job::XmlImporter importer;
-  // implicit rule : one job per file
-  boost::shared_ptr<job::JobsCollection> jobsCollection = importer.importFromFile(workingDirectory_ + "/" + baseJobsFile);
-  if (jobsCollection->begin() == jobsCollection->end())
-    return;
-  job::job_iterator itJobEntry = jobsCollection->begin();
-  boost::shared_ptr<job::JobEntry>& job = *itJobEntry;
+  boost::shared_ptr<job::JobEntry> job = inputs.cloneJobEntry();
   addDydFileToJob(job, scenario->getDydFile());
 
   SimulationParameters params;
@@ -424,17 +438,16 @@ MarginCalculationLauncher::launchScenario(const boost::shared_ptr<Scenario>& sce
   dumpFile << workingDirectory_ << "/loadIncreaseFinalState-" << variation << ".dmp";
   //  force simulation to load previous dump and to use final values
   params.InitialStateFile_ = dumpFile.str();
-  std::stringstream iidmFile;
-  iidmFile << workingDirectory_ << "/loadIncreaseFinalState-" << variation << ".iidm";
-  params.iidmFile_ = iidmFile.str();
+  params.iidmFile_ = generateIDMFileNameForVariation(variation);
   std::stringstream scenarioId;
   scenarioId << variation;
   result.setScenarioId(scenario->getId());
   result.setVariation(scenarioId.str());
-  boost::shared_ptr<DYN::Simulation> simulation = createAndInitSimulation(workingDir, job, params, result);
+  boost::shared_ptr<DYN::Simulation> simulation = createAndInitSimulation(workingDir, job, params, result, inputs);
 
   if (simulation)
     simulate(simulation, result);
+
   if (nbThreads_ == 1)
     std::cout << " Task :" << scenario->getId() << " status =" << getStatusAsString(result.getStatus()) << std::endl;
 }
@@ -444,6 +457,8 @@ MarginCalculationLauncher::findOrLaunchLoadIncrease(const boost::shared_ptr<Load
     const double variation, const double tolerance, SimulationResult& result) {
   Trace::info(logTag_) << DYNAlgorithmsLog(VariationValue, variation) << Trace::endline;
   if (nbThreads_ == 1) {
+    inputs_.readInputs(workingDirectory_, loadIncrease->getJobsFile(), 1);
+    inputs_.setCurrentVariant(0);
     launchLoadIncrease(loadIncrease, variation, result);
     return;
   }
@@ -487,8 +502,12 @@ MarginCalculationLauncher::findOrLaunchLoadIncrease(const boost::shared_ptr<Load
     loadIncreaseCache_[variationsToLaunch[i]] = SimulationResult();  // Reserve memory
     createScenarioWorkingDir(loadIncrease->getId(), variationsToLaunch[i]);
   }
+
+  inputs_.readInputs(workingDirectory_, loadIncrease->getJobsFile(), variationsToLaunch.size());
+
 #pragma omp parallel for schedule(dynamic, 1)
   for (unsigned int i=0; i < variationsToLaunch.size(); i++) {
+    inputs_.setCurrentVariant(i);
     launchLoadIncrease(loadIncrease, variationsToLaunch[i], loadIncreaseCache_[variationsToLaunch[i]]);
   }
   assert(loadIncreaseCache_.find(variation) != loadIncreaseCache_.end());
@@ -500,13 +519,11 @@ MarginCalculationLauncher::launchLoadIncrease(const boost::shared_ptr<LoadIncrea
     const double variation, SimulationResult& result) {
   if (nbThreads_ == 1)
     std::cout << "Launch loadIncrease of " << variation << "%" <<std::endl;
+
   std::stringstream subDir;
   subDir << "step-" << variation << "/" << loadIncrease->getId();
   std::string workingDir = createAbsolutePath(subDir.str(), workingDirectory_);
-
-  job::XmlImporter importer;
-  boost::shared_ptr<job::JobsCollection> jobsCollection = importer.importFromFile(workingDirectory_ + "/" + loadIncrease->getJobsFile());
-  job::job_iterator itJobEntry = jobsCollection->begin();  // implicit : only one job in loadIncrease job files
+  boost::shared_ptr<job::JobEntry> job = inputs_.cloneJobEntry();
 
   SimulationParameters params;
   //  force simulation to dump final values (would be used as input to launch each events)
@@ -523,7 +540,7 @@ MarginCalculationLauncher::launchLoadIncrease(const boost::shared_ptr<LoadIncrea
   std::stringstream scenarioId;
   scenarioId << "loadIncrease-" << variation;
   result.setScenarioId(scenarioId.str());
-  boost::shared_ptr<DYN::Simulation> simulation = createAndInitSimulation(workingDir, *itJobEntry, params, result);
+  boost::shared_ptr<DYN::Simulation> simulation = createAndInitSimulation(workingDir, job, params, result, inputs_);
 
   if (simulation) {
     boost::shared_ptr<DYN::ModelMulti> modelMulti = boost::dynamic_pointer_cast<DYN::ModelMulti>(simulation->model_);
@@ -591,6 +608,13 @@ MarginCalculationLauncher::createOutputs(std::map<std::string, std::string>& map
       }
     }
   }
+}
+
+std::string
+MarginCalculationLauncher::generateIDMFileNameForVariation(double variation) const {
+  std::stringstream iidmFile;
+  iidmFile << workingDirectory_ << "/loadIncreaseFinalState-" << variation << ".iidm";
+  return iidmFile.str();
 }
 
 

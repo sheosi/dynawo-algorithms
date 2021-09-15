@@ -334,7 +334,7 @@ display_environmentVariables() {
 }
 
 # Configure dynawo-algorithms
-config_dynawo-algorithms() {
+config_dynawo_algorithms() {
   if [ ! -d "$DYNAWO_ALGORITHMS_BUILD_DIR" ]; then
     mkdir -p $DYNAWO_ALGORITHMS_BUILD_DIR
   fi
@@ -369,7 +369,7 @@ config_dynawo-algorithms() {
 }
 
 # Compile dynawo-algorithms
-build_dynawo-algorithms() {
+build_dynawo_algorithms() {
   cd $DYNAWO_ALGORITHMS_BUILD_DIR
   make -j$DYNAWO_NB_PROCESSORS_USED &&
   make -j$DYNAWO_NB_PROCESSORS_USED install
@@ -380,11 +380,11 @@ build_dynawo-algorithms() {
 
 #build all doc
 build_test_doc() {
-  build_doc_dynawo-algorithms || error_exit
-  test_doxygen_doc_dynawo-algorithms || error_exit
+  build_doc_dynawo_algorithms || error_exit
+  test_doxygen_doc_dynawo_algorithms || error_exit
 }
 
-build_doc_dynawo-algorithms() {
+build_doc_dynawo_algorithms() {
   cd $DYNAWO_ALGORITHMS_BUILD_DIR
   mkdir -p $DYNAWO_ALGORITHMS_INSTALL_DIR/doxygen/
   make -j$DYNAWO_NB_PROCESSORS_USED doc
@@ -392,7 +392,7 @@ build_doc_dynawo-algorithms() {
   return ${RETURN_CODE}
 }
 
-test_doxygen_doc_dynawo-algorithms() {
+test_doxygen_doc_dynawo_algorithms() {
   if [ -f $DYNAWO_ALGORITHMS_INSTALL_DIR/doxygen/warnings.txt  ] ; then
     nb_warnings=$(wc -l $DYNAWO_ALGORITHMS_INSTALL_DIR/doxygen/warnings.txt | cut -f1 -d' ')
     if [ ${nb_warnings} -ne 0 ]; then
@@ -408,9 +408,9 @@ test_doxygen_doc_dynawo-algorithms() {
 
 
 build_tests() {
-  clean_dynawo-algorithms || error_exit
-  config_dynawo-algorithms || error_exit
-  build_dynawo-algorithms || error_exit
+  clean_dynawo_algorithms || error_exit
+  config_dynawo_algorithms || error_exit
+  build_dynawo_algorithms || error_exit
   tests=$@
   if [ -z "$tests" ]; then
     cmake --build $DYNAWO_ALGORITHMS_BUILD_DIR --target tests --config Debug
@@ -422,9 +422,9 @@ build_tests() {
 }
 
 build_tests_coverage() {
-  clean_dynawo-algorithms || error_exit
-  config_dynawo-algorithms || error_exit
-  build_dynawo-algorithms || error_exit
+  clean_dynawo_algorithms || error_exit
+  config_dynawo_algorithms || error_exit
+  build_dynawo_algorithms || error_exit
   tests=$@
   cmake --build $DYNAWO_ALGORITHMS_BUILD_DIR --target reset-coverage --config Debug || error_exit "Error during make reset-coverage."
   if [ -z "$tests" ]; then
@@ -477,30 +477,30 @@ unittest_gdb() {
 }
 
 #clean dynawo-algorithms
-clean_dynawo-algorithms() {
+clean_dynawo_algorithms() {
   rm -rf $DYNAWO_ALGORITHMS_BUILD_DIR
 }
 
 # uninstall dynawo-algorithms
-uninstall_dynawo-algorithms() {
+uninstall_dynawo_algorithms() {
   rm -rf $DYNAWO_ALGORITHMS_INSTALL_DIR
 }
 
 # Clean, then configure and build dynawo-algorithms
-clean_build_dynawo-algorithms() {
-  clean_dynawo-algorithms || error_exit
-  uninstall_dynawo-algorithms || error_exit
-  config_dynawo-algorithms || error_exit
-  build_dynawo-algorithms || error_exit
+clean_build_dynawo_algorithms() {
+  clean_dynawo_algorithms || error_exit
+  uninstall_dynawo_algorithms || error_exit
+  config_dynawo_algorithms || error_exit
+  build_dynawo_algorithms || error_exit
 }
 
-clean_build_all_dynawo-algorithms() {
-  clean_build_dynawo-algorithms || error_exit
+clean_build_all_dynawo_algorithms() {
+  clean_build_dynawo_algorithms || error_exit
   build_test_doc || error_exit
 }
 
 version_validation() {
-  clean_build_all_dynawo-algorithms || error_exit
+  clean_build_all_dynawo_algorithms || error_exit
   create_distrib || error_exit
   nrt || error_exit
 }
@@ -543,7 +543,7 @@ clean_old_branches() {
   cd ${current_dir}
 }
 
-doc_dynawo-algorithms() {
+doc_dynawo_algorithms() {
   if [ ! -f $DYNAWO_ALGORITHMS_INSTALL_DIR/doxygen/html/index.html ]; then
     echo "Doxygen documentation not yet generated"
     echo "Generating ..."
@@ -567,7 +567,7 @@ export_var_env_to_file() {
   export | grep DYNAWO_ | sed -e 's/declare -x //g' > "$1"
 }
 
-deploy_dynawo-algorithms() {
+deploy_dynawo_algorithms() {
   rm -rf $DYNAWO_ALGORITHMS_DEPLOY_DIR
 
   mkdir -p $DYNAWO_ALGORITHMS_DEPLOY_DIR
@@ -607,6 +607,7 @@ create_distrib() {
   cp ../bin/* bin/
   cp ../lib/* lib/.
   cp -r ../share/* share/
+  cp $DYNAWO_HOME/sbin/timeline_filter/timelineFilter.py bin/.
   zip -r -y ../$ZIP_FILE bin/ lib/ share/ ddb/ 3rdParty/ extraLibs/
   cd $DYNAWO_ALGORITHMS_INSTALL_DIR
 
@@ -701,12 +702,12 @@ ARGS=`echo ${LAUNCH_COMMAND} | cut -d' ' -f2-`
 ## launch command
 case $MODE in
   config)
-    config_dynawo-algorithms || error_exit "Error while configuring dynawo-algorithms"
+    config_dynawo_algorithms || error_exit "Error while configuring dynawo-algorithms"
     ;;
 
   build)
-    config_dynawo-algorithms ||  error_exit "Error while configuring dynawo-algorithms"
-    build_dynawo-algorithms || error_exit "Error while building dynawo-algorithms"
+    config_dynawo_algorithms ||  error_exit "Error while configuring dynawo-algorithms"
+    build_dynawo_algorithms || error_exit "Error while building dynawo-algorithms"
     ;;
 
   build-doc)
@@ -726,7 +727,7 @@ case $MODE in
     ;;
 
   clean-build-all)
-    clean_build_all_dynawo-algorithms || error_exit
+    clean_build_all_dynawo_algorithms || error_exit
     ;;
 
   version-validation)
@@ -738,19 +739,19 @@ case $MODE in
     ;;
 
   deploy)
-    deploy_dynawo-algorithms || error_exit "Error during the deployment of dynawo-algorithms"
+    deploy_dynawo_algorithms || error_exit "Error during the deployment of dynawo-algorithms"
     ;;
 
   clean)
-    clean_dynawo-algorithms || error_exit "Error while cleaning dynawo-algorithms"
+    clean_dynawo_algorithms || error_exit "Error while cleaning dynawo-algorithms"
     ;;
 
   uninstall)
-    uninstall_dynawo-algorithms || error_exit "Error while uninstalling dynawo-algorithms"
+    uninstall_dynawo_algorithms || error_exit "Error while uninstalling dynawo-algorithms"
     ;;
 
   clean-build)
-    clean_build_dynawo-algorithms || error_exit
+    clean_build_dynawo_algorithms || error_exit
     ;;
 
   SA)
@@ -788,7 +789,7 @@ case $MODE in
     ;;
 
   doc)
-    doc_dynawo-algorithms || error_exit "Error during dynawo-algorithms doc visualisation"
+    doc_dynawo_algorithms || error_exit "Error during dynawo-algorithms doc visualisation"
     ;;
 
   version)
@@ -802,5 +803,6 @@ case $MODE in
   *)
     echo "$1 is an invalid option"
     echo "$usage"
+    exit 1
     ;;
 esac

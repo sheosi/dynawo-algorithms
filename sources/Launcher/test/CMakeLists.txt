@@ -13,6 +13,8 @@ set(MODULE_NAME dynawo_algorithms_Launcher_unittest)
 
 set(MODULE_SOURCES
   TestRobustnessAnalysisLauncher.cpp
+  TestDataInterfaceContainer.cpp
+  TestMultiVariantInputs.cpp
   )
 
 add_executable(${MODULE_NAME} ${MODULE_SOURCES})
@@ -25,6 +27,8 @@ target_include_directories(${MODULE_NAME}
 target_link_libraries(${MODULE_NAME}
   dynawo_algorithms_Launcher
   dynawo_algorithms_Test
+
+  Dynawo::dynawo_DataInterfaceFactory
   )
 
 add_custom_target(${MODULE_NAME}-pre-tests

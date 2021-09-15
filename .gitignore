@@ -12,6 +12,7 @@ documentation/*.out
 documentation/*.pdf
 nrt/data/*/*/outputs*/
 nrt/data/*/*/step-*
+nrt/data/IEEE14/IEEE14*/*.xml
 nrt/data/IEEE14/SA*/IEEE14*
 nrt/data/IEEE14/SA*/*.dyd
 nrt/data/IEEE14/SA*/*.par
@@ -38,6 +39,7 @@ platforms/DBCreation/DBCreation.log
 distributions/
 .gitignore_local
 *.orig
+deploy/*
 
 sources/config_algorithms.h
 gitversion_algorithms.h*
@@ -54,3 +56,5 @@ gitversion_algorithms.h*
 *.code-workspace
 
 # End of https://www.toptal.com/developers/gitignore/api/vscode
+
+myEnvDynawoAlgorithms.sh
