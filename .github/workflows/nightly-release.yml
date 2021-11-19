@@ -51,7 +51,7 @@ jobs:
         run: |
           export DYNAWO_HOME=$(pwd)/dynawo
           export DYNAWO_ALGORITHMS_HOME=$(pwd)
-          util/envDynawoAlgorithms.sh distrib
+          util/envDynawoAlgorithms.sh distrib-headers
 
       - name: Delete old tag and release
         run: |
