@@ -75,5 +75,6 @@ jobs:
           tag: "${{ steps.commit_id.outputs.MASTER_COMMIT_ID }}"
           artifacts: "distributions/*"
           allowUpdates: true
+          prerelease: true
           artifactErrorsFailBuild: true
           token: ${{ secrets.GITHUB_TOKEN }}
