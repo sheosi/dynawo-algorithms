@@ -32,7 +32,7 @@ jobs:
           repo: "sheosi/dynawo"
           version: "tags/nightly"
           file: "Dynawo_headers_V${{ env.VERSION }}"
-          target: "dynawo/dynawo.zip"
+          target: "dynawo.zip"
           token: "${{ secrets.GITHUB_TOKEN }}"
           
       - name: Extract Dynawo
