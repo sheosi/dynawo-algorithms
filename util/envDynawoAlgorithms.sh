@@ -32,7 +32,8 @@ where [option] can be:
 
     clean-build-all               call in this order clean, config, build, build-doc
 
-    distrib ([args])              create distribution of dynawo-algorithms
+    distrib                       create distribution of dynawo-algorithms
+    distrib-headers               create distribution of dynawo-algorithms
     deploy                        deploy the current version of dynawo-algorithms binaries/libraries/includes to be used as a release by an another project
 
     clean                         remove dynawo-algorithms objects
@@ -598,19 +599,57 @@ create_distrib() {
   DYNAWO_ALGORITHMS_VERSION=$(version)
   version=$(echo $DYNAWO_ALGORITHMS_VERSION | cut -f1 -d' ')
 
-  ZIP_FILE=dynawoAlgorithms_V$version.zip
+  ZIP_FILE=Dynawo_algorithms_V$version.zip
 
   cd $DYNAWO_ALGORITHMS_INSTALL_DIR
   mkdir tmp/
   cd tmp/
-  cp -r $DYNAWO_HOME/* .
-  cp ../bin/* bin/
-  cp ../lib/* lib/.
-  cp -r ../share/* share/
+  mkdir dynawo-algorithms
+  cp -r $DYNAWO_HOME/* dynawo-algorithms/
+  cp ../bin/* dynawo-algorithms/bin/
+  cp ../lib/* dynawo-algorithms/lib/.
+  cp -r ../share/* dynawo-algorithms/share/
   # combines dictionaries mapping
-  cat $DYNAWO_HOME/share/dictionaries_mapping.dic | grep -v -F // | grep -v -e '^$' >> share/dictionaries_mapping.dic
-  cp $DYNAWO_HOME/sbin/timeline_filter/timelineFilter.py bin/.
-  zip -r -y ../$ZIP_FILE bin/ lib/ share/ ddb/ dynawo.sh
+  cat $DYNAWO_HOME/share/dictionaries_mapping.dic | grep -v -F // | grep -v -e '^$' >> dynawo-algorithms/share/dictionaries_mapping.dic
+  cp $DYNAWO_HOME/sbin/timeline_filter/timelineFilter.py dynawo-algorithms/bin/.
+  zip -r -y ../$ZIP_FILE dynawo-algorithms/bin/ dynawo-algorithms/lib/ 
+  zip -r -y -g ../$ZIP_FILE dynawo-algorithms/share/ 
+  zip -r -y -g ../$ZIP_FILE dynawo-algorithms/ddb/
+  zip -r -y -g ../$ZIP_FILE dynawo-algorithms/dynawo.sh
+  cd $DYNAWO_ALGORITHMS_INSTALL_DIR
+
+  # remove temp directory
+  rm -rf $DYNAWO_ALGORITHMS_INSTALL_DIR/tmp
+
+  # move distribution in distribution directory
+  DISTRIB_DIR=$DYNAWO_ALGORITHMS_HOME/distributions
+  mkdir -p $DISTRIB_DIR
+  mv $ZIP_FILE $DISTRIB_DIR
+}
+
+create_distrib_with_headers() {
+  DYNAWO_ALGORITHMS_VERSION=$(version)
+  version=$(echo $DYNAWO_ALGORITHMS_VERSION | cut -f1 -d' ')
+
+  ZIP_FILE=Dynawo_algorithms_headers_V$version.zip
+
+  cd $DYNAWO_ALGORITHMS_INSTALL_DIR
+  mkdir tmp/
+  cd tmp/
+  mkdir dynawo-algorithms
+  cp -r $DYNAWO_HOME/* dynawo-algorithms/
+  cp ../bin/* dynawo-algorithms/bin/
+  cp ../include/* dynawo-algorithms/include/.
+  cp ../lib/* dynawo-algorithms/lib/.
+  cp -r ../share/* dynawo-algorithms/share/
+  # combines dictionaries mapping
+  cat $DYNAWO_HOME/share/dictionaries_mapping.dic | grep -v -F // | grep -v -e '^$' >> dynawo-algorithms/share/dictionaries_mapping.dic
+  cp $DYNAWO_HOME/sbin/timeline_filter/timelineFilter.py dynawo-algorithms/bin/.
+  zip -r -y ../$ZIP_FILE dynawo-algorithms/bin/ dynawo-algorithms/include 
+  zip -r -y -g ../$ZIP_FILE dynawo-algorithms/lib/ 
+  zip -r -y -g ../$ZIP_FILE dynawo-algorithms/share/ 
+  zip -r -y -g ../$ZIP_FILE dynawo-algorithms/ddb/
+  zip -r -y -g ../$ZIP_FILE dynawo-algorithms/dynawo.sh
   cd $DYNAWO_ALGORITHMS_INSTALL_DIR
 
   # remove temp directory
@@ -738,6 +777,10 @@ case $MODE in
 
   distrib)
     create_distrib || error_exit "Error while building dynawo-algorithms distribution"
+    ;;
+
+  distrib-headers)
+    create_distrib_with_headers || error_exit "Error while building dynawo-algorithms distribution"
     ;;
 
   deploy)
