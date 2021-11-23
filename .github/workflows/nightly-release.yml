@@ -71,7 +71,7 @@ jobs:
       - name: Get last commit in master
         id: commit_id
         run: |
-          echo "::set-output name=MASTER_COMMIT_ID::$($CURL_JSON -X GET  '$GH_API/git/refs/heads/master'| python3 -c 'import sys, json; print(json.load(sys.stdin)["object"]["sha"])')"
+          echo "::set-output name=MASTER_COMMIT_ID::$($CURL_JSON -X GET  $GH_API/git/refs/heads/master| python3 -c 'import sys, json; print(json.load(sys.stdin)["object"]["sha"])')"
 
       - name: Create Nightly Tag
         run: |
@@ -80,8 +80,8 @@ jobs:
 
       - name: Release
         run: |
-          $CURL_JSON -X POST -u $"user:${{ secrets.GITHUB_TOKEN }}" $GH_API/releases -d $'{"tag_name":"nightly", "target_commitish": "${{ steps.commit_id.outputs.MASTER_COMMIT_ID }}", "name": "Nightly", "body": "Dynawo\'s nightly release. Compiled on *release* settings.\\n\\n **Don\'t use it for production**", "draft": false, "prerelease": true }'
+          $CURL_JSON -X POST -u "user:${{ secrets.GITHUB_TOKEN }}" $GH_API/releases -d $'{"tag_name":"nightly", "target_commitish": "${{ steps.commit_id.outputs.MASTER_COMMIT_ID }}", "name": "Nightly", "body": "Dynawo\'s nightly release. Compiled on *release* settings.\\n\\n **Don\'t use it for production**", "draft": false, "prerelease": true }'
           sleep 10 # Wait for release to be published
-          UPLOAD_URL=$(curl -s -X GET $GH_https://api.github.com/repos/sheosi/dynawo-algorithmsAPI/releases | python3 -c 'import sys, json;l=[x for x in json.load(sys.stdin) if x["tag_name"]=="nightly"];print(str(l[0]["upload_url"]))' | grep -o ".*assets")
+          UPLOAD_URL=$(curl -s -X GET $GH_API/releases | python3 -c 'import sys, json;l=[x for x in json.load(sys.stdin) if x["tag_name"]=="nightly"];print(str(l[0]["upload_url"]))' | grep -o ".*assets")
           $CURL_ZIP -u "user:${{ secrets.GITHUB_TOKEN }}" -X POST $UPLOAD_URL?name=Dynawo_algorithms_V$VERSION.zip  --data-binary @distributions/Dynawo_algorithms_V$VERSION.zip
           $CURL_ZIP -u "user:${{ secrets.GITHUB_TOKEN }}" -X POST $UPLOAD_URL?name=Dynawo_algorithms_headers_V$VERSION.zip  --data-binary @distributions/Dynawo_algorithms_headers_V$VERSION.zip
