@@ -39,7 +39,7 @@ jobs:
               'import sys, json;l=[x for x in json.load(sys.stdin)["assets"] if x["name"]=="$2"];print(str(l[0]["url"]) if l else "")' \
             )
             
-            if [! -z $ASSET_URL ]; then
+            if [ ! -z $ASSET_URL ]; then
               curl \
                 -J \
                 -L \
