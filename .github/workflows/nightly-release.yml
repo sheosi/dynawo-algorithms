@@ -34,7 +34,7 @@ jobs:
         run: |
           download_asset() {
             ASSET_URL=$( \
-              curl  -u "user: ${{ secrets.GITHUB_TOKEN }}   \
+              curl  -u "user: ${{ secrets.GITHUB_TOKEN }}"   \
               -s ${{ github.api_url }}/repos/$1/releases/tags/nightly | python3 -c \
               'import sys, json;l=[x for x in json.load(sys.stdin)["assets"] if x["name"]=="$2"];print(str(l[0]["url"]) if l else "")' \
             )
