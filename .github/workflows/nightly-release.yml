@@ -47,7 +47,7 @@ jobs:
                 -u "user: ${{ secrets.GITHUB_TOKEN }}" \
                 "$ASSET_URL" \
                 --create-dirs \
-                --limit-rate 1M \
+                --limit-rate 2M \
                 -o "$2"
             else
               echo "Asset not found $2 in $1"
@@ -59,7 +59,7 @@ jobs:
           
       - name: Extract Dynawo
         run: |
-          unzip -qq "dynawo.zip"
+          unzip -qq "Dynawo_headers_Nightly.zip"
           cd ..
 
       - name: Build
