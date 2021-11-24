@@ -31,13 +31,31 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Fetch Dynawo
-        uses: dsaltares/fetch-gh-release-asset@master
-        with:
-          repo: "sheosi/dynawo"
-          version: "tags/nightly"
-          file: "Dynawo_headers_V${{ env.VERSION }}"
-          target: "dynawo.zip"
-          token: "${{ secrets.GITHUB_TOKEN }}"
+        run: |
+          download_asset() {
+            ASSET_URL=$( \
+              curl  -u "user: ${{ secrets.GITHUB_TOKEN }}   \
+              -s ${{ github.api_url }}/repos/$1/releases/tags/nightly | python3 -c \
+              'import sys, json;l=[x for x in json.load(sys.stdin)["assets"] if x["name"]=="$2"];print(str(l[0]["url"]) if l else "")' \
+            )
+            
+            if [! -z $ASSET_URL ]; then
+              curl \
+                -J \
+                -L \
+                -H "Accept: application/octet-stream" \
+                -u "user: ${{ secrets.GITHUB_TOKEN }}" \
+                "$ASSET_URL" \
+                --create-dirs \
+                --limit-rate 1M \
+                -o "${TARGET}"
+            else
+              echo "Asset not found $2 in $1"
+              exit 1
+            fi
+          }
+          
+          download_asset zamarrenolm/dynawo Dynawo_headers_Nightly.zip
           
       - name: Extract Dynawo
         run: |
