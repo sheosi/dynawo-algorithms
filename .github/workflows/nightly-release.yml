@@ -36,7 +36,7 @@ jobs:
             ASSET_URL=$( \
               curl  -u "user: ${{ secrets.GITHUB_TOKEN }}"   \
               -s ${{ github.api_url }}/repos/$1/releases/tags/nightly | python3 -c \
-              'import sys, json;l=[x for x in json.load(sys.stdin)["assets"] if x["name"]=="$2"];print(str(l[0]["url"]) if l else "")' \
+              "import sys, json;l=[x for x in json.load(sys.stdin)['assets'] if x['name']=='$2'];print(str(l[0]['url']) if l else '')" \
             )
             
             if [ ! -z $ASSET_URL ]; then
@@ -48,7 +48,7 @@ jobs:
                 "$ASSET_URL" \
                 --create-dirs \
                 --limit-rate 1M \
-                -o "${TARGET}"
+                -o "$2"
             else
               echo "Asset not found $2 in $1"
               exit 1
