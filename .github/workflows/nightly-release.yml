@@ -55,7 +55,7 @@ jobs:
             fi
           }
           
-          download_asset zamarrenolm/dynawo Dynawo_headers_Nightly.zip
+          download_asset sheosi/dynawo Dynawo_headers_Nightly.zip
           
       - name: Extract Dynawo
         run: |
