@@ -66,7 +66,7 @@ jobs:
           pwd
           ls
           echo DEBUG write dynawoEnv
-          cat > dynawo/dynawoEnv.txt  << EOF 
+          cat > dynawo-algorithms/dynawo/dynawoEnv.txt  << EOF 
           DYNAWO_ADEPT_INSTALL_DIR="/__w/dynawo/dynawo/install/3rdParty/gcc5.3.1/shared/Release-cxx11/adept"
           DYNAWO_BOOST_HOME="/__w/dynawo/dynawo/install/3rdParty/gcc5.3.1/shared/Release-cxx11/boost"
           DYNAWO_BOOST_HOME_DEFAULT="false"
@@ -139,7 +139,7 @@ jobs:
           EOF
           
           echo "Debug. env file"
-          cat dynawo/dynawoEnv.txt
+          cat dynawo-algorithms/dynawo/dynawoEnv.txt
 
 
       - name: Build
