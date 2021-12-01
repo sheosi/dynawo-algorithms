@@ -63,6 +63,7 @@ jobs:
           cd ..
           
           # Write
+          echo DEBUG write dynawoEnv
           cat > dynawo-algorithms/dynawo-algorithms/dynawo/dynawoEnv.txt  << EOF 
           DYNAWO_ADEPT_INSTALL_DIR="/__w/dynawo/dynawo/install/3rdParty/gcc5.3.1/shared/Release-cxx11/adept"
           DYNAWO_BOOST_HOME="/__w/dynawo/dynawo/install/3rdParty/gcc5.3.1/shared/Release-cxx11/boost"
