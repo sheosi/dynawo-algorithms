@@ -1,11 +1,3 @@
-greet()
-{
-    local GREET_COMMAND=$1
-    local WHO=$2
-    echo "DEBUG. greet function, greet command is = $GREET_COMMAND"
-    $GREET_COMMAND "Hello $WHO"
-}
-
 wait_for_http_code()
 {
     local WAIT_URL=$1
