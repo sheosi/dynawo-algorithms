@@ -58,7 +58,7 @@ jobs:
           
       - name: Extract Dynawo
         run: |
-          unzip -qq "Dynawo_headers_Nightly.zip"
+          unzip -qq "Dynawo_headers_V${VERSION}.zip"
           cd ..
           
           # Write dynawoEnv file, which isn't contained inside the distribution
