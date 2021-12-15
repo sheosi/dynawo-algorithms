@@ -33,15 +33,15 @@ jobs:
         run: |
           download_asset() {
             ASSET_URL=$( \
-              curl  -u "user: ${{ secrets.GITHUB_TOKEN }}"   \
-              -s ${{ github.api_url }}/repos/$1/releases/tags/nightly | python3 -c \
+              CURL_JSON  -u "user: ${{ secrets.GITHUB_TOKEN }}"   \
+              ${{ github.api_url }}/repos/$1/releases/tags/nightly | python3 -c \
               "import sys, json;l=[x for x in json.load(sys.stdin)['assets'] if x['name']=='$2'];print(str(l[0]['url']) if l else '')" \
             )
             
             if [ ! -z $ASSET_URL ]; then
               curl \
-                -J \
-                -L \
+                --remote-header-name \
+                --location \
                 -H "Accept: application/octet-stream" \
                 -u "user: ${{ secrets.GITHUB_TOKEN }}" \
                 "$ASSET_URL" \
