@@ -249,6 +249,11 @@ jobs:
           echo "ASSETS_URL=$ASSETS_URL" >> $GITHUB_ENV
           echo "Upload assets"
           cd distributions
+          
+          # Rename assets
+          mv Dynawo_algorithms_V${VERSION}.zip Dynawo_algorithms_Linux_v${VERSION}.zip
+          mv Dynawo_algorithms_headers_V${VERSION}.zip Dynawo_algorithms_Linux_headers_v${VERSION}.zip
+          
           for FILE in *zip; do
             [ -f "$FILE" ] || break
             echo "Upload asset $FILE"
